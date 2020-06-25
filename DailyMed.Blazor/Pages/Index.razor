@@ -1,0 +1,54 @@
+﻿@page "/"
+@inject ApiService ApiService
+@inject DataServices Service
+
+<div class="container">
+    <div class="row">
+        <div class="text-left mb-1">
+            <h5>Drug Classes</h5>
+        </div>
+    </div>
+</div>
+
+@if (Data == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <DataGrid @ref="GridRef"></DataGrid>
+}
+
+@code {
+    public DataGrid GridRef;
+    private List<Datum> Data { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        // Get the data from the API service
+        Data = await ApiService.GetDataAsync();
+
+        // Get data from the SQLite database
+        var data = await Service.GetAllAsync();
+
+        // If DB has no data then add datum
+        if (data == null)
+        {
+            for (int i = 0; i < Data.Count(); i++)
+            {
+                await Service.AddAsync(new Datum
+                {
+                    Code = Data.ElementAt(i).Code,
+                    CodingSystem = Data.ElementAt(i).CodingSystem,
+                    Type = Data.ElementAt(i).Type,
+                    Name = Data.ElementAt(i).Name
+                });
+            }
+        }
+    }
+}
